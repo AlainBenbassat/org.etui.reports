@@ -7,6 +7,11 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
   }
 
   public function buildForm(&$form) {
+    // add language filter
+    $form->addCheckBox('langFilter', 'Magazine Language', ['English' => 'en', 'French' => 'fr']);
+
+    $form->assign('elements', ['langFilter']);
+
     CRM_Utils_System::setTitle(E::ts('HesaMag Addresses'));
   }
 
@@ -71,14 +76,33 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
         civicrm_membership hesa_fr on hesa_fr.contact_id = contact_a.id and hesa_fr.membership_type_id = $HESA_FR and hesa_fr.status_id = $MEMBERSHIP_STATUS_CURRENT
     ";
 
-
     return $from;
   }
 
   public function where($includeContactIDs = FALSE) {
-    $params = [];
-    $where = "hesa_en.id is not null or hesa_fr.id is not null";
+    $values = $this->_formValues;
 
+    // check if the language filter is set
+    if (array_key_exists('langFilter', $values)) {
+      $where = '';
+
+      if (array_key_exists('en', $values['langFilter'])) {
+        $where = "hesa_en.id is not null";
+      }
+
+      if (array_key_exists('fr', $values['langFilter'])) {
+        if ($where) {
+          $where .= ' or ';
+        }
+        $where .= "hesa_fr.id is not null";
+      }
+    }
+    else {
+      // no language filter is set, select all
+      $where = "hesa_en.id is not null or hesa_fr.id is not null";
+    }
+
+    $params = [];
     return $this->whereClause($where, $params);
   }
 
