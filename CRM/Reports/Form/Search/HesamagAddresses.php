@@ -1,33 +1,50 @@
 <?php
-use CRM_Reports_ExtensionUtil as E;
 
 class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_Custom_Base implements CRM_Contact_Form_Search_Interface {
+  private $MEMBERSHIP_STATUS_CURRENT = 2;
+  private $MEMBERSHIP_STATUS_NEW = 2;
+  private $HESA_EN = 1;
+  private $HESA_FR = 2;
+  private $MAGAZINE_ADDRESS_TYPE_ID = 8;
+  private $MAGAZINE2_ADDRESS_TYPE_ID = 9;
+  private $INDIVIDUAL_PREFIX_GROUP_ID = 6;
+
   function __construct(&$formValues) {
     parent::__construct($formValues);
   }
 
   public function buildForm(&$form) {
     // add language filter
-    $form->addCheckBox('langFilter', 'Magazine Language', ['English' => 'en', 'French' => 'fr']);
+    $filter = [
+      'EN' => 'English HesaMag',
+      'FR' => 'French HesaMag',
+      'EN+FR' => 'English and French HesaMag',
+    ];
+    $form->addRadio('langFilter', 'Subscribers of:', $filter,NULL,'<br>',TRUE);
 
-    $form->assign('elements', ['langFilter']);
+    // add start date filter
+    $form->add('datepicker', 'startDate', 'Membership start date from:', '', FALSE,['time' => FALSE]);
 
-    CRM_Utils_System::setTitle(E::ts('HesaMag Addresses'));
+    $form->assign('elements', ['langFilter', 'startDate']);
+
+    CRM_Utils_System::setTitle('HesaMag Addresses');
   }
 
   public function &columns() {
     $columns = array(
-      //E::ts('Contact Id') => 'contact_id',
-      E::ts('Name') => 'sort_name',
-      E::ts('Address line 1') => 'supplemental_address_1',
-      E::ts('Address line 2') => 'supplemental_address_2',
-      E::ts('Address line 3') => 'supplemental_address_3',
-      E::ts('Street') => 'street_address',
-      E::ts('Postal Code') => 'postal_code',
-      E::ts('City') => 'city',
-      E::ts('Country') => 'country',
-      'EN' => 'EN',
-      'FR' => 'FR',
+      'Contact Id' => 'contact_id',
+      'Organization' => 'organization_name',
+      'Prefix' => 'prefix',
+      'First Name' => 'first_name',
+      'Last Name' => 'last_name',
+      'Address line 1' => 'supplemental_address_1',
+      'Address line 2' => 'supplemental_address_2',
+      'Address line 3' => 'supplemental_address_3',
+      'Street' => 'street_address',
+      'Postal Code' => 'postal_code',
+      'City' => 'city',
+      'Country' => 'country',
+      'Magazine language' => 'magazine_lang',
     );
     return $columns;
   }
@@ -39,9 +56,15 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
   }
 
   public function select() {
+    $values = $this->_formValues;
+
     $select = "
       contact_a.id as contact_id
-      , contact_a.sort_name
+      , contact_a.id
+      , contact_a.organization_name
+      , px.name prefix
+      , contact_a.first_name
+      , contact_a.last_name
       , a.supplemental_address_1
       , a.supplemental_address_2
       , a.supplemental_address_3
@@ -49,31 +72,22 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
       , a.postal_code
       , a.city
       , ctry.name country
-      , if(hesa_en.id is null, '', 'EN') EN
-      , if(hesa_fr.id is null, '', 'FR') FR
+      , '" . $values['langFilter'] . "' magazine_lang
     ";
 
     return $select;
   }
 
-
   public function from() {
-    $MAGAZINE_ADDRESS_TYPE_ID = 8;
-    $MEMBERSHIP_STATUS_CURRENT = 2;
-    $HESA_EN = 1;
-    $HESA_FR = 2;
-
     $from = "
       FROM
         civicrm_contact contact_a
-      INNER JOIN
-        civicrm_address a on a.contact_id = contact_a.id and a.location_type_id = $MAGAZINE_ADDRESS_TYPE_ID
+      LEFT OUTER JOIN
+        civicrm_option_value px on px.value = contact_a.prefix_id and px.option_group_id = {$this->INDIVIDUAL_PREFIX_GROUP_ID}      
+      LEFT OUTER JOIN
+        civicrm_address a on a.contact_id = contact_a.id and a.location_type_id in ({$this->MAGAZINE_ADDRESS_TYPE_ID}, {$this->MAGAZINE2_ADDRESS_TYPE_ID})
       LEFT OUTER JOIN
         civicrm_country ctry on ctry.id = a.country_id
-      LEFT OUTER JOIN
-        civicrm_membership hesa_en on hesa_en.contact_id = contact_a.id and hesa_en.membership_type_id = $HESA_EN and hesa_en.status_id = $MEMBERSHIP_STATUS_CURRENT
-      LEFT OUTER JOIN
-        civicrm_membership hesa_fr on hesa_fr.contact_id = contact_a.id and hesa_fr.membership_type_id = $HESA_FR and hesa_fr.status_id = $MEMBERSHIP_STATUS_CURRENT
     ";
 
     return $from;
@@ -82,25 +96,111 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
   public function where($includeContactIDs = FALSE) {
     $values = $this->_formValues;
 
-    // check if the language filter is set
-    if (array_key_exists('langFilter', $values)) {
-      $where = '';
-
-      if (array_key_exists('en', $values['langFilter'])) {
-        $where = "hesa_en.id is not null";
-      }
-
-      if (array_key_exists('fr', $values['langFilter'])) {
-        if ($where) {
-          $where .= ' or ';
-        }
-        $where .= "hesa_fr.id is not null";
-      }
+    if (array_key_exists('startDate', $values) && $values['startDate']) {
+      $startDateFilter = "'{$values['startDate']}'";
     }
     else {
-      // no language filter is set, select all
-      $where = "hesa_en.id is not null or hesa_fr.id is not null";
+      $startDateFilter = "'2000-01-01'";
     }
+
+    if ($values['langFilter'] == 'EN') {
+      $where = "
+        exists (
+          select
+            *
+          from
+            civicrm_membership hesa_en
+          where
+            hesa_en.contact_id = contact_a.id
+          and
+            hesa_en.membership_type_id = {$this->HESA_EN}
+          and
+            hesa_en.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
+          and
+            hesa_en.start_date > $startDateFilter
+        )
+        and not exists (
+          select
+            *
+          from
+            civicrm_membership hesa_fr
+          where
+            hesa_fr.contact_id = contact_a.id
+          and
+            hesa_fr.membership_type_id = {$this->HESA_FR}
+          and
+            hesa_fr.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
+          and
+            hesa_fr.start_date > $startDateFilter                    
+        )
+      ";
+    }
+    elseif ($values['langFilter'] == 'FR') {
+      $where = "
+        not exists (
+          select
+            *
+          from
+            civicrm_membership hesa_en
+          where
+            hesa_en.contact_id = contact_a.id
+          and
+            hesa_en.membership_type_id = {$this->HESA_EN}
+          and
+            hesa_en.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
+          and
+            hesa_en.start_date > $startDateFilter
+        )
+        and exists (
+          select
+            *
+          from
+            civicrm_membership hesa_fr
+          where
+            hesa_fr.contact_id = contact_a.id
+          and
+            hesa_fr.membership_type_id = {$this->HESA_FR}
+          and
+            hesa_fr.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
+          and
+            hesa_fr.start_date > $startDateFilter                    
+        )
+      ";
+    }
+    else {
+      $where = "
+        exists (
+          select
+            *
+          from
+            civicrm_membership hesa_en
+          where
+            hesa_en.contact_id = contact_a.id
+          and
+            hesa_en.membership_type_id = {$this->HESA_EN}
+          and
+            hesa_en.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
+          and
+            hesa_en.start_date > $startDateFilter
+        )
+        and exists (
+          select
+            *
+          from
+            civicrm_membership hesa_fr
+          where
+            hesa_fr.contact_id = contact_a.id
+          and
+            hesa_fr.membership_type_id = {$this->HESA_FR}
+          and
+            hesa_fr.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
+          and
+            hesa_fr.start_date >= $startDateFilter                    
+        )
+      ";
+    }
+
+    $where .= ' and contact_a.is_deleted = 0';
 
     $params = [];
     return $this->whereClause($where, $params);
