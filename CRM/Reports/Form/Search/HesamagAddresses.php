@@ -51,7 +51,7 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
 
  public function all($offset = 0, $rowcount = 0, $sort = NULL, $includeContactIDs = FALSE, $justIDs = FALSE) {
     $sql = $this->sql($this->select(), $offset, $rowcount, $sort, $includeContactIDs, NULL);
-    die($sql);
+    //die($sql);
     return $sql;
   }
 
