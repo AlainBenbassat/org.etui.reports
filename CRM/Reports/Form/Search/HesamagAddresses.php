@@ -2,7 +2,7 @@
 
 class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_Custom_Base implements CRM_Contact_Form_Search_Interface {
   private $MEMBERSHIP_STATUS_CURRENT = 2;
-  private $MEMBERSHIP_STATUS_NEW = 2;
+  private $MEMBERSHIP_STATUS_NEW = 1;
   private $HESA_EN = 1;
   private $HESA_FR = 2;
   private $MAGAZINE_ADDRESS_TYPE_ID = 8;
@@ -51,7 +51,7 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
 
  public function all($offset = 0, $rowcount = 0, $sort = NULL, $includeContactIDs = FALSE, $justIDs = FALSE) {
     $sql = $this->sql($this->select(), $offset, $rowcount, $sort, $includeContactIDs, NULL);
-    //die($sql);
+    die($sql);
     return $sql;
   }
 
@@ -61,7 +61,7 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
     $select = "
       contact_a.id as contact_id
       , contact_a.id
-      , contact_a.organization_name
+      , if(a.location_type_id = {$this->MAGAZINE2_ADDRESS_TYPE_ID}, '', contact_a.organization_name) organization_name
       , px.name prefix
       , contact_a.first_name
       , contact_a.last_name
@@ -117,7 +117,7 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
           and
             hesa_en.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
           and
-            hesa_en.start_date > $startDateFilter
+            hesa_en.start_date >= $startDateFilter
         )
         and not exists (
           select
@@ -131,7 +131,7 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
           and
             hesa_fr.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
           and
-            hesa_fr.start_date > $startDateFilter                    
+            hesa_fr.start_date >= $startDateFilter                    
         )
       ";
     }
@@ -149,7 +149,7 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
           and
             hesa_en.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
           and
-            hesa_en.start_date > $startDateFilter
+            hesa_en.start_date >= $startDateFilter
         )
         and exists (
           select
@@ -163,7 +163,7 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
           and
             hesa_fr.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
           and
-            hesa_fr.start_date > $startDateFilter                    
+            hesa_fr.start_date >= $startDateFilter                    
         )
       ";
     }
@@ -181,7 +181,7 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
           and
             hesa_en.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
           and
-            hesa_en.start_date > $startDateFilter
+            hesa_en.start_date >= $startDateFilter
         )
         and exists (
           select
