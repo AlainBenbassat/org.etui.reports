@@ -3,6 +3,16 @@
 require_once 'reports.civix.php';
 use CRM_Reports_ExtensionUtil as E;
 
+
+function reports_civicrm_searchTasks($objectType, &$tasks) {
+  if ($objectType == 'event') {
+    $tasks[] = [
+      'title' => 'Presence List (for signatures)',
+      'class' => 'CRM_Reports_Task_ShowPresenceList', //CRM_Bemasreporting_Task_ShowPresenceList
+    ];
+  }
+}
+
 /**
  * Implements hook_civicrm_config().
  *
