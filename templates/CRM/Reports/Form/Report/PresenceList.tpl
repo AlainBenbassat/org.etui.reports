@@ -42,13 +42,16 @@
     </script>
 {/if}
 
-<!-- footer on every page -->
-<div style="width: 100%; position: fixed; left: 0; bottom: -1.6em; font-size: 10px; line-height: 1.8;">
-    <table width="100%">
-        <tr>
-            <td style="vertical-align: top;"><img src="https://crm.etui.org/sites/default/files/pictures/cvrep/eu-flag.jpg"></td>
-            <td style="vertical-align: top;">The ETUI is financially supported by the European Union.<br>ETUI aisbl, {$currentYear}</td>
-            <td style="vertical-align: top; text-align: right"><img src="https://crm.etui.org/sites/default/files/pictures/cvrep/logo-etui.png"</td>
-        </tr>
-    </table>
-</div>
+{if $outputMode == 'pdf'}
+    <!-- footer on every page -->
+    <div style="width: 100%; position: fixed; left: 0; bottom: -1.6em; font-size: 10px; line-height: 1.8;">
+        <table width="100%">
+            <tr>
+                <td style="vertical-align: top;"><img src="https://crm.etui.org/sites/default/files/pictures/cvrep/eu-flag.jpg"></td>
+                <td style="vertical-align: top;">The ETUI is financially supported by the European Union.<br>ETUI aisbl, {$currentYear}</td>
+                <td style="vertical-align: top; text-align: right"><img style="width: 120px" src="https://crm.etui.org/sites/default/files/pictures/cvrep/logo-etui.png"</td>
+            </tr>
+        </table>
+    </div>
+{/if}
+

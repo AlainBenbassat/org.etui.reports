@@ -43,6 +43,16 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
             'required' => TRUE,
             'dbAlias' => "'<br><br><br>'",
           ),
+          'day2' => array(
+            'title' => 'Day 2',
+            'required' => FALSE,
+            'dbAlias' => "''"
+          ),
+          'day3' => array(
+            'title' => 'Day 3',
+            'required' => FALSE,
+            'dbAlias' => "''"
+          ),
         ),
         'filters' => array(
           'event' => array(
@@ -178,6 +188,16 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
   }
 
   function alterDisplay(&$rows) {
+    if (array_key_exists('civicrm_contact_day2', $this->_columnHeaders)) {
+      // change "Signature" to "Signature Day 1"
+      $this->_columnHeaders['civicrm_contact_signature']['title'] = 'Signature Day 1';
+
+      $this->_columnHeaders['civicrm_contact_day2']['title'] = 'Signature Day 2';
+    }
+
+    if (array_key_exists('civicrm_contact_day3', $this->_columnHeaders)) {
+      $this->_columnHeaders['civicrm_contact_day3']['title'] = 'Signature Day 3';
+    }
   }
 
   function getEventList($event_id) {
