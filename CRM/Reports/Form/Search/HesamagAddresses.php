@@ -39,7 +39,6 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
       'Last Name' => 'last_name',
       'Address line 1' => 'supplemental_address_1',
       'Address line 2' => 'supplemental_address_2',
-      'Address line 3' => 'supplemental_address_3',
       'Street' => 'street_address',
       'Postal Code' => 'postal_code',
       'City' => 'city',
@@ -61,13 +60,16 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
     $select = "
       contact_a.id as contact_id
       , contact_a.id
-      , if(a.location_type_id = {$this->MAGAZINE2_ADDRESS_TYPE_ID}, '', contact_a.organization_name) organization_name
+      , if(
+          a.location_type_id = {$this->MAGAZINE2_ADDRESS_TYPE_ID}, 
+          '', 
+          ifnull(cmaster.organization_name, ifnull(a.supplemental_address_3, contact_a.organization_name))
+        ) organization_name
       , px.name prefix
       , contact_a.first_name
       , contact_a.last_name
       , a.supplemental_address_1
       , a.supplemental_address_2
-      , a.supplemental_address_3
       , a.street_address
       , a.postal_code
       , a.city
@@ -86,6 +88,10 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
         civicrm_option_value px on px.value = contact_a.prefix_id and px.option_group_id = {$this->INDIVIDUAL_PREFIX_GROUP_ID}      
       LEFT OUTER JOIN
         civicrm_address a on a.contact_id = contact_a.id and a.location_type_id in ({$this->MAGAZINE_ADDRESS_TYPE_ID}, {$this->MAGAZINE2_ADDRESS_TYPE_ID})
+      LEFT OUTER JOIN
+        civicrm_address amaster on a.master_id = amaster.id
+      LEFT OUTER JOIN
+        civicrm_contact cmaster on amaster.contact_id = cmaster.id 
       LEFT OUTER JOIN
         civicrm_country ctry on ctry.id = a.country_id
     ";
