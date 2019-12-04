@@ -3,6 +3,8 @@ use CRM_Reports_ExtensionUtil as E;
 
 class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
   protected $_summary = NULL;
+  private $event_date;
+  private $number_of_selected_days = 0;
 
   function __construct() {
     // see if we have an event id
@@ -37,21 +39,23 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
           'organization_name' => array(
             'title' => 'Organisation',
             'required' => TRUE,
+            'dbAlias' => 'pp.organisation_487',
           ),
-          'signature' => array(
-            'title' => 'Signature',
-            'required' => TRUE,
-            'dbAlias' => "'<br><br><br>'",
+          'day1' => array(
+            'title' => 'Day 1',
+            'required' => FALSE,
+            'default' => TRUE,
+            'dbAlias' => "'<br><br><br>'"
           ),
           'day2' => array(
             'title' => 'Day 2',
             'required' => FALSE,
-            'dbAlias' => "''"
+            'dbAlias' => "'<br><br><br>'"
           ),
           'day3' => array(
             'title' => 'Day 3',
             'required' => FALSE,
-            'dbAlias' => "''"
+            'dbAlias' => "'<br><br><br>'"
           ),
         ),
         'filters' => array(
@@ -63,7 +67,18 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
             'required' => TRUE,
           ),
         ),
-      )
+      ),
+      'civicrm_participant' => array(
+        'dao' => 'CRM_Event_DAO_Participant',
+        'filters' => array(
+          'rid' => array(
+            'name' => 'role_id',
+            'title' => ts('Participant Role'),
+            'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+            'options' => CRM_Event_PseudoConstant::participantRole(),
+          ),
+        ),
+      ),
     );
 
     parent::__construct();
@@ -100,15 +115,31 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
       FROM
         civicrm_contact {$this->_aliases['civicrm_contact']} {$this->_aclFrom}
       INNER JOIN
-        civicrm_participant p
-      ON
-        {$this->_aliases['civicrm_contact']}.id = p.contact_id 
-        AND p.role_id = 1 and p.status_id not in (4,7,8,9,10,11,12) 
+        civicrm_participant p ON {$this->_aliases['civicrm_contact']}.id = p.contact_id
+      LEFT OUTER JOIN
+        civicrm_value_participant_p_206 pp ON p.id = pp.entity_id
     ";
   }
 
   function where() {
-    $this->_where = " WHERE {$this->_aliases['civicrm_contact']}.is_deleted = 0 and {$this->_aliases['civicrm_contact']}.is_deceased = 0 and event_id = " . $this->getSelectedParam('event_value');
+    $this->_where = "
+      WHERE
+        {$this->_aliases['civicrm_contact']}.is_deleted = 0
+      and
+        {$this->_aliases['civicrm_contact']}.is_deceased = 0
+      and
+        p.status_id not in (4,7,8,9,10,11,12)
+      and
+        event_id = " . $this->getSelectedParam('event_value');
+
+    // check if we have to filter on role id as well
+    if (array_key_exists('rid_value', $this->_submitValues)) {
+      $operator = $this->_submitValues['rid_op'];
+      if ($operator == 'notin') {
+        $operator = 'not in';
+      }
+      $this->_where .= " and role_id $operator (" . implode(',', $this->_submitValues['rid_value']) . ')';
+    }
 
     if ($this->_aclWhere) {
       $this->_where .= " AND {$this->_aclWhere} ";
@@ -140,23 +171,41 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
     $this->beginPostProcess();
 
     // get the acl clauses built before we assemble the query
-    $this->buildACLClause($this->_aliases['civicrm_contact']);
     $sql = $this->buildQuery(TRUE);
     //die($sql);
-    $rows = array();
+    $rows = [];
     $this->buildRows($sql, $rows);
+
+    // get the selected days
+    if (array_key_exists('civicrm_contact_day1', $this->_columnHeaders)) {
+      $dayOffset = 0;
+      $this->number_of_selected_days++;
+    }
+    if (array_key_exists('civicrm_contact_day2', $this->_columnHeaders)) {
+      $this->number_of_selected_days++;
+      $dayOffset = 1;
+    }
+    if (array_key_exists('civicrm_contact_day3', $this->_columnHeaders)) {
+      $this->number_of_selected_days++;
+      $dayOffset = 2;
+    }
 
     // get the selected event
     $params = ['id' => $this->getSelectedParam('event_value')];
     $event = civicrm_api3('Event', 'getsingle', $params);
-    $eventDate = date_format(date_create($event['start_date']), 'l, j F Y');
-    $eventHour = date_format(date_create($event['start_date']), 'H')
-      . 'h' . date_format(date_create($event['start_date']), 'i')
-      . '-' . date_format(date_create($event['end_date']), 'H')
-      . 'h' . date_format(date_create($event['end_date']), 'i');
+
+    // if more than one day is selected, we show the start date
+    // otherwise we show the start date + day offset
+    $date = new DateTime($event['start_date']);
+    if ($this->number_of_selected_days > 1) {
+      $this->event_date = $date;
+    }
+    else {
+      $this->event_date = $date->add(new DateInterval('P' . $dayOffset . 'D'));;
+    }
+
     $this->assign('eventTitle', $event['title']);
-    $this->assign('eventDate', $eventDate);
-    $this->assign('eventHour', $eventHour);
+    $this->assign('eventDate', $date->format('l, j F Y'));
     $this->assign('currentYear', date('Y'));
 
     // add location
@@ -166,16 +215,23 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
       if ($eventLocBlock['address_id']) {
         $eventAddress = civicrm_api3('Address', 'getsingle', ['id' => $eventLocBlock['address_id']]);
         if ($eventAddress['street_address']) {
-          $eventLocation = $eventAddress['street_address'] . '<br>';
+          $eventLocation .= $eventAddress['street_address'] . '<br>';
         }
         if ($eventAddress['supplemental_address_1']) {
-          $eventLocation = $eventAddress['supplemental_address_1'] . '<br>';
+          $eventLocation .= $eventAddress['supplemental_address_1'] . '<br>';
         }
         if ($eventAddress['supplemental_address_2']) {
-          $eventLocation = $eventAddress['supplemental_address_2'] . '<br>';
+          $eventLocation .= $eventAddress['supplemental_address_2'] . '<br>';
         }
         if ($eventAddress['postal_code'] || $eventAddress['city']) {
-          $eventLocation = $eventAddress['postal_code'] . ' ' . $eventAddress['city'];
+          $eventLocation .= $eventAddress['postal_code'] . ' ' . $eventAddress['city'] . '<br>';
+        }
+        if ($eventAddress['country_id']) {
+          $country = civicrm_api3('Country', 'getsingle', [
+            'id' => $eventAddress['country_id'],
+            'return' => ['name'],
+          ]);
+          $eventLocation .= $country['name'];
         }
       }
     }
@@ -188,15 +244,33 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
   }
 
   function alterDisplay(&$rows) {
-    if (array_key_exists('civicrm_contact_day2', $this->_columnHeaders)) {
-      // change "Signature" to "Signature Day 1"
-      $this->_columnHeaders['civicrm_contact_signature']['title'] = 'Signature Day 1';
-
-      $this->_columnHeaders['civicrm_contact_day2']['title'] = 'Signature Day 2';
+    // the signature columns are: day1, day2, day3
+    // the user can select 1 column (e.g. day2) or multiple
+    if ($this->number_of_selected_days == 1) {
+      // change the column title to "Signature"
+      if (array_key_exists('civicrm_contact_day1', $this->_columnHeaders)) {
+        $this->_columnHeaders['civicrm_contact_day1']['title'] = 'Signature';
+      }
+      elseif (array_key_exists('civicrm_contact_day2', $this->_columnHeaders)) {
+        $this->_columnHeaders['civicrm_contact_day2']['title'] = 'Signature';
+      }
+      elseif (array_key_exists('civicrm_contact_day3', $this->_columnHeaders)) {
+        $this->_columnHeaders['civicrm_contact_day3']['title'] = 'Signature';
+      }
     }
-
-    if (array_key_exists('civicrm_contact_day3', $this->_columnHeaders)) {
-      $this->_columnHeaders['civicrm_contact_day3']['title'] = 'Signature Day 3';
+    else {
+      // change the column titles with date
+      if (array_key_exists('civicrm_contact_day1', $this->_columnHeaders)) {
+        $this->_columnHeaders['civicrm_contact_day1']['title'] = $this->event_date->format('j F');
+      }
+      if (array_key_exists('civicrm_contact_day2', $this->_columnHeaders)) {
+        $d = clone $this->event_date;
+        $this->_columnHeaders['civicrm_contact_day2']['title'] = $d->add(new DateInterval('P1D'))->format('j F');
+      }
+      if (array_key_exists('civicrm_contact_day3', $this->_columnHeaders)) {
+        $d = clone $this->event_date;
+        $this->_columnHeaders['civicrm_contact_day3']['title'] = $d->add(new DateInterval('P2D'))->format('j F');
+      }
     }
   }
 

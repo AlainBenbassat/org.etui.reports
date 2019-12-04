@@ -10,7 +10,7 @@
         </tr>
         <tr>
             <td width="30%" style="font-size: 1.3em; font-family: Arial Narrow">{$eventDate}</td>
-            <td style="text-align: center; font-size: 1.3em; font-family: Arial Narrow">{$eventHour}</td>
+            <td style="text-align: center; font-size: 1.3em; font-family: Arial Narrow">&nbsp;</td>
             <td width="45%" style="font-size: 1.3em; font-family: Arial Narrow">{$eventLocation}</td>
         </tr>
     </table>
