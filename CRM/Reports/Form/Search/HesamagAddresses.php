@@ -14,6 +14,9 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
   }
 
   public function buildForm(&$form) {
+    $items = [];
+    $defaults = [];
+
     // add language filter
     $filter = [
       'EN' => 'English HesaMag',
@@ -21,11 +24,18 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
       'EN+FR' => 'English and French HesaMag',
     ];
     $form->addRadio('langFilter', 'Subscribers of:', $filter,NULL,'<br>',TRUE);
+    $items[] = 'langFilter';
+
+    $form->addYesNo('include_inhouse', 'Include in-house?', TRUE);
+    $items[] = 'include_inhouse';
+    $defaults['include_inhouse'] = 0;
 
     // add start date filter
     $form->add('datepicker', 'startDate', 'Membership start date from:', '', FALSE,['time' => FALSE]);
+    $items[] = 'startDate';
 
-    $form->assign('elements', ['langFilter', 'startDate']);
+    $form->assign('elements', $items);
+    $form->setDefaults($defaults);
 
     CRM_Utils_System::setTitle('HesaMag Addresses');
   }
@@ -61,8 +71,8 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
       contact_a.id as contact_id
       , contact_a.id
       , if(
-          a.location_type_id = {$this->MAGAZINE2_ADDRESS_TYPE_ID}, 
-          '', 
+          a.location_type_id = {$this->MAGAZINE2_ADDRESS_TYPE_ID},
+          '',
           ifnull(cmaster.organization_name, ifnull(a.supplemental_address_3, contact_a.organization_name))
         ) organization_name
       , px.name prefix
@@ -85,13 +95,13 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
       FROM
         civicrm_contact contact_a
       LEFT OUTER JOIN
-        civicrm_option_value px on px.value = contact_a.prefix_id and px.option_group_id = {$this->INDIVIDUAL_PREFIX_GROUP_ID}      
+        civicrm_option_value px on px.value = contact_a.prefix_id and px.option_group_id = {$this->INDIVIDUAL_PREFIX_GROUP_ID}
       LEFT OUTER JOIN
         civicrm_address a on a.contact_id = contact_a.id and a.location_type_id in ({$this->MAGAZINE_ADDRESS_TYPE_ID}, {$this->MAGAZINE2_ADDRESS_TYPE_ID})
       LEFT OUTER JOIN
         civicrm_address amaster on a.master_id = amaster.id
       LEFT OUTER JOIN
-        civicrm_contact cmaster on amaster.contact_id = cmaster.id 
+        civicrm_contact cmaster on amaster.contact_id = cmaster.id
       LEFT OUTER JOIN
         civicrm_country ctry on ctry.id = a.country_id
     ";
@@ -109,99 +119,47 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
       $startDateFilter = "'2000-01-01'";
     }
 
+    if (array_key_exists('include_inhouse', $values) && $values['include_inhouse'] == 1) {
+      $includeInhouse = 1;
+    }
+    else {
+      $includeInhouse = 0;
+    }
+
+    // prepare the subqueries for the exists clause
+    $EN_subscribers = $this->getSubQuery('EN', $startDateFilter, $includeInhouse);
+    $FR_subscribers = $this->getSubQuery('FR', $startDateFilter, $includeInhouse);
+
     if ($values['langFilter'] == 'EN') {
+      // people who only want the EN magazine
       $where = "
         exists (
-          select
-            *
-          from
-            civicrm_membership hesa_en
-          where
-            hesa_en.contact_id = contact_a.id
-          and
-            hesa_en.membership_type_id = {$this->HESA_EN}
-          and
-            hesa_en.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
-          and
-            hesa_en.start_date >= $startDateFilter
+          $EN_subscribers
         )
         and not exists (
-          select
-            *
-          from
-            civicrm_membership hesa_fr
-          where
-            hesa_fr.contact_id = contact_a.id
-          and
-            hesa_fr.membership_type_id = {$this->HESA_FR}
-          and
-            hesa_fr.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
-          and
-            hesa_fr.start_date >= $startDateFilter                    
+          $FR_subscribers
         )
       ";
     }
     elseif ($values['langFilter'] == 'FR') {
+      // people who only want the FR magazine
       $where = "
         not exists (
-          select
-            *
-          from
-            civicrm_membership hesa_en
-          where
-            hesa_en.contact_id = contact_a.id
-          and
-            hesa_en.membership_type_id = {$this->HESA_EN}
-          and
-            hesa_en.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
-          and
-            hesa_en.start_date >= $startDateFilter
+          $EN_subscribers
         )
         and exists (
-          select
-            *
-          from
-            civicrm_membership hesa_fr
-          where
-            hesa_fr.contact_id = contact_a.id
-          and
-            hesa_fr.membership_type_id = {$this->HESA_FR}
-          and
-            hesa_fr.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
-          and
-            hesa_fr.start_date >= $startDateFilter                    
+          $FR_subscribers
         )
       ";
     }
     else {
+      // people who only want both the EN and the FR magazine
       $where = "
         exists (
-          select
-            *
-          from
-            civicrm_membership hesa_en
-          where
-            hesa_en.contact_id = contact_a.id
-          and
-            hesa_en.membership_type_id = {$this->HESA_EN}
-          and
-            hesa_en.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
-          and
-            hesa_en.start_date >= $startDateFilter
+          $EN_subscribers
         )
         and exists (
-          select
-            *
-          from
-            civicrm_membership hesa_fr
-          where
-            hesa_fr.contact_id = contact_a.id
-          and
-            hesa_fr.membership_type_id = {$this->HESA_FR}
-          and
-            hesa_fr.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
-          and
-            hesa_fr.start_date >= $startDateFilter                    
+          $FR_subscribers
         )
       ";
     }
@@ -214,5 +172,33 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
 
   public function templateFile() {
     return 'CRM/Contact/Form/Search/Custom.tpl';
+  }
+
+  public function getSubQuery($lang, $startDateFilter, $includeInHouse) {
+    $typeID = $lang == 'EN' ? $this->HESA_EN : $this->HESA_FR;
+
+    // include or exclude the in-house subscription type (= custom field subscription_type_492, value = 1 means in-house)
+    $inHouseID = $includeInHouse == 1 ? -1 : 1;
+
+    $sql = "
+      select
+        *
+      from
+        civicrm_membership hesa_$lang
+      left outer join
+        civicrm_value_membership_ty_210 mty_$lang on mty_$lang.entity_id = hesa_$lang.id
+      where
+        hesa_$lang.contact_id = contact_a.id
+      and
+        hesa_$lang.membership_type_id = $typeID
+      and
+        hesa_$lang.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
+      and
+        hesa_$lang.start_date >= $startDateFilter
+      and
+        mty_$lang.subscription_type_492 <> $inHouseID
+    ";
+
+    return $sql;
   }
 }
