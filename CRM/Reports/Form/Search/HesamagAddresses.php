@@ -164,7 +164,7 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
       ";
     }
 
-    $where .= ' and contact_a.is_deleted = 0';
+    $where .= ' and contact_a.is_deleted = 0 and contact_a.is_deceased = 0 ';
 
     $params = [];
     return $this->whereClause($where, $params);
