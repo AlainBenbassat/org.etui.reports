@@ -133,7 +133,7 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
         event_id = " . $this->getSelectedParam('event_value');
 
     // check if we have to filter on role id as well
-    if (array_key_exists('rid_value', $this->_submitValues)) {
+    if (array_key_exists('rid_value', $this->_submitValues) && count($this->_submitValues['rid_value']) > 0) {
       $operator = $this->_submitValues['rid_op'];
       if ($operator == 'notin') {
         $operator = 'not in';
