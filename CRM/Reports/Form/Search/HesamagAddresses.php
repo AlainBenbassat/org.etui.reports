@@ -196,7 +196,7 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
       and
         hesa_$lang.start_date >= $startDateFilter
       and
-        mty_$lang.subscription_type_492 <> $inHouseID
+        ifnull(mty_$lang.subscription_type_492, 999) <> $inHouseID
     ";
 
     return $sql;
