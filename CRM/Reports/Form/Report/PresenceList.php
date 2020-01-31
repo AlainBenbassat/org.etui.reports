@@ -57,6 +57,16 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
             'required' => FALSE,
             'dbAlias' => "'<br><br><br>'"
           ),
+          'day4' => array(
+            'title' => 'Day 4',
+            'required' => FALSE,
+            'dbAlias' => "'<br><br><br>'"
+          ),
+          'day5' => array(
+            'title' => 'Day 5',
+            'required' => FALSE,
+            'dbAlias' => "'<br><br><br>'"
+          ),
         ),
         'filters' => array(
           'event' => array(
@@ -189,6 +199,14 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
       $this->number_of_selected_days++;
       $dayOffset = 2;
     }
+    if (array_key_exists('civicrm_contact_day4', $this->_columnHeaders)) {
+      $this->number_of_selected_days++;
+      $dayOffset = 3;
+    }
+    if (array_key_exists('civicrm_contact_day5', $this->_columnHeaders)) {
+      $this->number_of_selected_days++;
+      $dayOffset = 4;
+    }
 
     // get the selected event
     $params = ['id' => $this->getSelectedParam('event_value')];
@@ -257,6 +275,12 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
       elseif (array_key_exists('civicrm_contact_day3', $this->_columnHeaders)) {
         $this->_columnHeaders['civicrm_contact_day3']['title'] = 'Signature';
       }
+      elseif (array_key_exists('civicrm_contact_day4', $this->_columnHeaders)) {
+        $this->_columnHeaders['civicrm_contact_day4']['title'] = 'Signature';
+      }
+      elseif (array_key_exists('civicrm_contact_day5', $this->_columnHeaders)) {
+        $this->_columnHeaders['civicrm_contact_day5']['title'] = 'Signature';
+      }
     }
     else {
       // change the column titles with date
@@ -270,6 +294,14 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
       if (array_key_exists('civicrm_contact_day3', $this->_columnHeaders)) {
         $d = clone $this->event_date;
         $this->_columnHeaders['civicrm_contact_day3']['title'] = $d->add(new DateInterval('P2D'))->format('j F');
+      }
+      if (array_key_exists('civicrm_contact_day4', $this->_columnHeaders)) {
+        $d = clone $this->event_date;
+        $this->_columnHeaders['civicrm_contact_day4']['title'] = $d->add(new DateInterval('P2D'))->format('j F');
+      }
+      if (array_key_exists('civicrm_contact_day5', $this->_columnHeaders)) {
+        $d = clone $this->event_date;
+        $this->_columnHeaders['civicrm_contact_day5']['title'] = $d->add(new DateInterval('P2D'))->format('j F');
       }
     }
   }
