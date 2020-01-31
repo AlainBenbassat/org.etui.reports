@@ -297,11 +297,11 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
       }
       if (array_key_exists('civicrm_contact_day4', $this->_columnHeaders)) {
         $d = clone $this->event_date;
-        $this->_columnHeaders['civicrm_contact_day4']['title'] = $d->add(new DateInterval('P2D'))->format('j F');
+        $this->_columnHeaders['civicrm_contact_day4']['title'] = $d->add(new DateInterval('P3D'))->format('j F');
       }
       if (array_key_exists('civicrm_contact_day5', $this->_columnHeaders)) {
         $d = clone $this->event_date;
-        $this->_columnHeaders['civicrm_contact_day5']['title'] = $d->add(new DateInterval('P2D'))->format('j F');
+        $this->_columnHeaders['civicrm_contact_day5']['title'] = $d->add(new DateInterval('P4D'))->format('j F');
       }
     }
   }
