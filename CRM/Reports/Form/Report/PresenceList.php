@@ -39,7 +39,12 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
           'organization_name' => array(
             'title' => 'Organisation',
             'required' => TRUE,
-            'dbAlias' => 'pp.organisation_487',
+            'dbAlias' => 'cc.organisation_550',
+          ),
+          'country' => array(
+            'title' => 'Country',
+            'required' => FALSE,
+            'dbAlias' => 'cc_ctry.label',
           ),
           'day1' => array(
             'title' => 'Day 1',
@@ -127,7 +132,9 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
       INNER JOIN
         civicrm_participant p ON {$this->_aliases['civicrm_contact']}.id = p.contact_id
       LEFT OUTER JOIN
-        civicrm_value_participant_p_206 pp ON p.id = pp.entity_id
+        civicrm_value_belonging_to_221 cc ON {$this->_aliases['civicrm_contact']}.id = cc.entity_id
+      LEFT OUTER JOIN
+        civicrm_option_value cc_ctry ON cc.origin_552 = cc_ctry.value and cc_ctry.option_group_id = 135
     ";
   }
 
