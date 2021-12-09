@@ -92,6 +92,12 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
             'operatorType' => CRM_Report_Form::OP_MULTISELECT,
             'options' => CRM_Event_PseudoConstant::participantRole(),
           ),
+          'presence' => array(
+            'name' => 'presence',
+            'title' => 'Presence',
+            'operatorType' => CRM_Report_Form::OP_SELECT,
+            'options' => CRM_Core_OptionGroup::values('presence_20210628091316'),
+          ),
         ),
       ),
     );
@@ -135,6 +141,8 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
         civicrm_value_belonging_to_221 cc ON {$this->_aliases['civicrm_contact']}.id = cc.entity_id
       LEFT OUTER JOIN
         civicrm_option_value cc_ctry ON cc.origin_552 = cc_ctry.value and cc_ctry.option_group_id = 135
+      LEFT OUTER JOIN
+        civicrm_value_participant_p_206 pp ON p.id = pp.entity_id
     ";
   }
 
@@ -156,6 +164,11 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
         $operator = 'not in';
       }
       $this->_where .= " and role_id $operator (" . implode(',', $this->_submitValues['rid_value']) . ')';
+    }
+
+    // check if we have to filter on presence
+    if (array_key_exists('presence_value', $this->_submitValues)) {
+      $this->_where .= " and ifnull(pp.presence_575, 1) = " . $this->_submitValues['presence_value'];
     }
 
     if ($this->_aclWhere) {
