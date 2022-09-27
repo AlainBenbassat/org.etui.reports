@@ -48,7 +48,7 @@
         <table width="100%">
             <tr>
                 <td style="vertical-align: top;"><img src="https://crm.etui.org/sites/default/files/pictures/cvrep/eu-flag.jpg"></td>
-                <td style="vertical-align: top;">The ETUI is financially supported by the European Union.<br>ETUI aisbl, {$currentYear}</td>
+                <td style="vertical-align: top;">The ETUI is co-funded by the European Union.<br>ETUI aisbl, {$currentYear}</td>
                 <td style="vertical-align: top; text-align: right"><img style="width: 120px" src="https://crm.etui.org/sites/default/files/pictures/cvrep/logo-etui.png"</td>
             </tr>
         </table>

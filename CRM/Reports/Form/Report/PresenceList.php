@@ -7,6 +7,8 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
   private $number_of_selected_days = 0;
 
   function __construct() {
+    $emptySignatureCell = $this->getEmptySignatureCell();
+
     // see if we have an event id
     if (($event_id = CRM_Utils_Request::retrieve('event_id', 'Positive'))) {
       // OK, found in the url
@@ -20,93 +22,93 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
       }
     }
 
-    $this->_columns = array(
-      'civicrm_contact' => array(
+    $this->_columns = [
+      'civicrm_contact' => [
         'dao' => 'CRM_Contact_DAO_Contact',
-        'fields' => array(
-          'id' => array(
+        'fields' => [
+          'id' => [
             'no_display' => TRUE,
             'required' => TRUE,
-          ),
-          'last_name' => array(
+          ],
+          'last_name' => [
             'title' => 'Last Name',
             'required' => TRUE,
-          ),
-          'first_name' => array(
+          ],
+          'first_name' => [
             'title' => 'First Name',
             'required' => TRUE,
-          ),
-          'organization_name' => array(
+          ],
+          'organization_name' => [
             'title' => 'Organisation',
             'required' => TRUE,
             'dbAlias' => 'cc.organisation_550',
-          ),
-          'country' => array(
+          ],
+          'country' => [
             'title' => 'Country',
             'required' => FALSE,
             'dbAlias' => 'cc_ctry.label',
-          ),
-          'day1' => array(
+          ],
+          'day1' => [
             'title' => 'Day 1',
             'required' => FALSE,
             'default' => TRUE,
-            'dbAlias' => "'<br><br><br>'"
-          ),
-          'day2' => array(
+            'dbAlias' => $emptySignatureCell,
+          ],
+          'day2' => [
             'title' => 'Day 2',
             'required' => FALSE,
-            'dbAlias' => "'<br><br><br>'"
-          ),
-          'day3' => array(
+            'dbAlias' => $emptySignatureCell,
+          ],
+          'day3' => [
             'title' => 'Day 3',
             'required' => FALSE,
-            'dbAlias' => "'<br><br><br>'"
-          ),
-          'day4' => array(
+            'dbAlias' => $emptySignatureCell,
+          ],
+          'day4' => [
             'title' => 'Day 4',
             'required' => FALSE,
-            'dbAlias' => "'<br><br><br>'"
-          ),
-          'day5' => array(
+            'dbAlias' => $emptySignatureCell,
+          ],
+          'day5' => [
             'title' => 'Day 5',
             'required' => FALSE,
-            'dbAlias' => "'<br><br><br>'"
-          ),
-        ),
-        'filters' => array(
-          'event' => array(
+            'dbAlias' => $emptySignatureCell,
+          ],
+        ],
+        'filters' => [
+          'event' => [
             'title' => ts('Event'),
             'type' => CRM_Utils_Type::T_INT,
             'operatorType' => CRM_Report_Form::OP_SELECT,
             'options' => $this->getEventList($event_id),
             'required' => TRUE,
-          ),
-        ),
-      ),
-      'civicrm_participant' => array(
+          ],
+        ],
+      ],
+      'civicrm_participant' => [
         'dao' => 'CRM_Event_DAO_Participant',
-        'filters' => array(
-          'rid' => array(
+        'filters' => [
+          'rid' => [
             'name' => 'role_id',
             'title' => ts('Participant Role'),
             'operatorType' => CRM_Report_Form::OP_MULTISELECT,
             'options' => CRM_Event_PseudoConstant::participantRole(),
-          ),
-          'presence' => array(
+          ],
+          'presence' => [
             'name' => 'presence',
             'title' => 'Presence',
             'operatorType' => CRM_Report_Form::OP_SELECT,
             'options' => CRM_Core_OptionGroup::values('presence_20210628091316'),
-          ),
-        ),
-      ),
-    );
+          ],
+        ],
+      ],
+    ];
 
     parent::__construct();
   }
 
   function select() {
-    $select = $this->_columnHeaders = array();
+    $select = $this->_columnHeaders = [];
 
     foreach ($this->_columns as $tableName => $table) {
       if (array_key_exists('fields', $table)) {
@@ -362,6 +364,23 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
     }
 
     return $eventList;
+  }
+
+  function getEmptySignatureCell() {
+    $cell = '';
+
+    $numWidth = 80;
+    $numHeight = 4;
+
+    for ($i = 0; $i < $numWidth; $i++) {
+      $cell .= '&nbsp;';
+    }
+
+    for ($i = 0; $i < $numHeight; $i++) {
+      $cell .= '<br>';
+    }
+
+    return "'$cell'";
   }
 
   function getSelectedParam($name) {
