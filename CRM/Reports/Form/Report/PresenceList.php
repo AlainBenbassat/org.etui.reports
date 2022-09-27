@@ -7,7 +7,7 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
   private $number_of_selected_days = 0;
 
   function __construct() {
-    $emptySignatureCell = $this->getEmptySignatureCell();
+    $emptySignatureCell = "'" . $this->getEmptySignatureCell() . "'";
 
     // see if we have an event id
     if (($event_id = CRM_Utils_Request::retrieve('event_id', 'Positive'))) {
@@ -226,8 +226,28 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
     $this->assign('currentYear', date('Y'));
 
     $this->formatDisplay($rows);
+    $this->addBlankRows($rows);
     $this->doTemplateAssignment($rows);
     $this->endPostProcess($rows);
+  }
+
+  function addBlankRows(&$rows) {
+    $numBlankRows = 10;
+    $emptySignatureCell = $this->getEmptySignatureCell();
+    $blankRow = [];
+
+    foreach ($rows[0] as $k => $v) {
+      if (strpos($k, 'civicrm_contact_day') === 0) {
+        $blankRow[$k] = $emptySignatureCell;
+      }
+      else {
+        $blankRow[$k] = '';
+      }
+    }
+
+    for ($i = 0; $i < $numBlankRows; $i++) {
+      $rows[] = $blankRow;
+    }
   }
 
   function getEventDuration($event) {
@@ -298,7 +318,7 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
     ]);
 
     if ($result['count'] > 0) {
-      $event['analytical_number'] = $result['values']['latest'];
+      $event['analytical_number'] = $result['values'][0]['latest'];
     }
     else {
       $event['analytical_number'] = '';
@@ -438,7 +458,7 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
       $cell .= '<br>';
     }
 
-    return "'$cell'";
+    return $cell;
   }
 
   function getSelectedParam($name) {
