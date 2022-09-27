@@ -4,7 +4,7 @@
             {include file="CRM/common/pager.tpl" location="top"}
         </div>
     {/if}
-    <table style="font-family: Arial Narrow; color: #FFFFFF; background-color: #b09ab6;width=100%">
+    <table style="font-family: Arial Narrow; color: #FFFFFF; background-color: #b09ab6;width:100%">
         <tr>
             <td style="font-size: 2em">{$eventTitle}</td>
         </tr>
