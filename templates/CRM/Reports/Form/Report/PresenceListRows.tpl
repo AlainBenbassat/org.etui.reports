@@ -4,16 +4,22 @@
             {include file="CRM/common/pager.tpl" location="top"}
         </div>
     {/if}
-    <table width="100%">
-        <tr style="font-family: Arial Narrow; font-size: 2em; color: #FFFFFF; background-color: #b09ab6;">
-            <td colspan="3">{$eventTitle}</td>
+    <table style="font-family: Arial Narrow; color: #FFFFFF; background-color: #b09ab6;width=100%">
+        <tr>
+            <td style="font-size: 2em">{$eventTitle}</td>
         </tr>
         <tr>
-            <td width="30%" style="font-size: 1.3em; font-family: Arial Narrow">{$eventDate}</td>
-            <td style="text-align: center; font-size: 1.3em; font-family: Arial Narrow">&nbsp;</td>
-            <td width="45%" style="font-size: 1.3em; font-family: Arial Narrow">{$eventLocation}</td>
+            <td style="font-size: 1.3em">{$eventLocation}</td>
+        </tr>
+        <tr>
+            <td style="font-size: 1.3em">{$eventDuration}</td>
+        </tr>
+        <tr>
+            <td style="font-size: 1.3em">{$eventanalyticalNumber}</td>
         </tr>
     </table>
+
+    <p style="font-size: 1.3em; font-family: Arial Narrow">{$eventDate}</p>
 
     <table class="report-layout display" style="{$etuiTableStyle}">
     {capture assign="tableHeader"}

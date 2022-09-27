@@ -208,6 +208,96 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
     $rows = [];
     $this->buildRows($sql, $rows);
 
+    $event = $this->getEventDetails();
+    $this->assign('eventTitle', $event['title']);
+    $this->assign('eventanalyticalNumber', 'Analytical no.: ' . $event['analytical_number']);
+
+    $this->setEventDateToShow($event);
+    $this->assign('eventDate', $this->event_date->format('l, j F Y'));
+
+    $eventLocation = $this->getEventLocation($event);
+    $this->assign('eventLocation', $eventLocation);
+
+    $eventDuration = $this->getEventDuration($event);
+    $this->assign('eventDuration', $eventDuration);
+
+    $this->assign('currentYear', date('Y'));
+
+    $this->formatDisplay($rows);
+    $this->doTemplateAssignment($rows);
+    $this->endPostProcess($rows);
+  }
+
+  function getEventDuration($event) {
+    $eventDuration = 'From ';
+
+    $startDate = new DateTime($event['start_date']);
+    $eventDuration .= $startDate->format('d-m-Y H:i');
+
+    if (!empty($event['end_date'])) {
+      $endDate = new DateTime($event['end_date']);
+      $eventDuration .= ' Until ' . $endDate->format('d-m-Y H:i');
+    }
+
+    return $eventDuration;
+  }
+
+  function getEventLocation($event) {
+    $eventLocation = '';
+    if ($event['loc_block_id']) {
+      $eventLocBlock = civicrm_api3('LocBlock', 'getsingle', ['id' => $event['loc_block_id']]);
+      if ($eventLocBlock['address_id']) {
+        $eventAddress = civicrm_api3('Address', 'getsingle', ['id' => $eventLocBlock['address_id']]);
+        if ($eventAddress['street_address']) {
+          $eventLocation .= $eventAddress['street_address'];
+        }
+        if ($eventAddress['supplemental_address_1']) {
+          $eventLocation .= ', ' . $eventAddress['supplemental_address_1'];
+        }
+        if ($eventAddress['supplemental_address_2']) {
+          $eventLocation .= ', ' . $eventAddress['supplemental_address_2'];
+        }
+        if ($eventAddress['postal_code'] || $eventAddress['city']) {
+          $eventLocation .= ', ' . $eventAddress['postal_code'] . ' ' . $eventAddress['city'];
+        }
+        if ($eventAddress['country_id'] && $eventAddress['street_address'] != 'Online') {
+          $country = civicrm_api3('Country', 'getsingle', [
+            'id' => $eventAddress['country_id'],
+            'return' => ['name'],
+          ]);
+          $eventLocation .= ', ' . $country['name'];
+        }
+      }
+    }
+
+    return $eventLocation;
+  }
+
+  function getEventDetails() {
+    $eventId = $this->getSelectedParam('event_value');
+
+    $event = civicrm_api3('Event', 'getsingle', [
+      'id' => $eventId,
+    ]);
+
+    // add custom field containing analytical number
+    $result = civicrm_api3('CustomValue', 'get', [
+      'sequential' => 1,
+      'return' => ['custom_618'],
+      'entity_id' => $eventId,
+    ]);
+
+    if ($result['count'] > 0) {
+      $event['analytical_number'] = $result['values']['latest'];
+    }
+    else {
+      $event['analytical_number'] = '';
+    }
+
+    return $event;
+  }
+
+  function setEventDateToShow($event) {
     // get the selected days
     if (array_key_exists('civicrm_contact_day1', $this->_columnHeaders)) {
       $dayOffset = 0;
@@ -230,10 +320,6 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
       $dayOffset = 4;
     }
 
-    // get the selected event
-    $params = ['id' => $this->getSelectedParam('event_value')];
-    $event = civicrm_api3('Event', 'getsingle', $params);
-
     // if more than one day is selected, we show the start date
     // otherwise we show the start date + day offset
     $date = new DateTime($event['start_date']);
@@ -243,44 +329,6 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
     else {
       $this->event_date = $date->add(new DateInterval('P' . $dayOffset . 'D'));;
     }
-
-    $this->assign('eventTitle', $event['title']);
-    $this->assign('eventDate', $date->format('l, j F Y'));
-    $this->assign('currentYear', date('Y'));
-
-    // add location
-    $eventLocation = '';
-    if ($event['loc_block_id']) {
-      $eventLocBlock = civicrm_api3('LocBlock', 'getsingle', ['id' => $event['loc_block_id']]);
-      if ($eventLocBlock['address_id']) {
-        $eventAddress = civicrm_api3('Address', 'getsingle', ['id' => $eventLocBlock['address_id']]);
-        if ($eventAddress['street_address']) {
-          $eventLocation .= $eventAddress['street_address'] . '<br>';
-        }
-        if ($eventAddress['supplemental_address_1']) {
-          $eventLocation .= $eventAddress['supplemental_address_1'] . '<br>';
-        }
-        if ($eventAddress['supplemental_address_2']) {
-          $eventLocation .= $eventAddress['supplemental_address_2'] . '<br>';
-        }
-        if ($eventAddress['postal_code'] || $eventAddress['city']) {
-          $eventLocation .= $eventAddress['postal_code'] . ' ' . $eventAddress['city'] . '<br>';
-        }
-        if ($eventAddress['country_id']) {
-          $country = civicrm_api3('Country', 'getsingle', [
-            'id' => $eventAddress['country_id'],
-            'return' => ['name'],
-          ]);
-          $eventLocation .= $country['name'];
-        }
-      }
-    }
-    $this->assign('eventLocation', $eventLocation);
-
-
-    $this->formatDisplay($rows);
-    $this->doTemplateAssignment($rows);
-    $this->endPostProcess($rows);
   }
 
   function alterDisplay(&$rows) {
