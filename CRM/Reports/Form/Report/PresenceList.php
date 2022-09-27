@@ -5,6 +5,7 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
   protected $_summary = NULL;
   private $event_date;
   private $number_of_selected_days = 0;
+  private $is_multi_day_event = FALSE;
 
   function __construct() {
     $emptySignatureCell = "'" . $this->getEmptySignatureCell() . "'";
@@ -213,7 +214,7 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
     $this->assign('eventanalyticalNumber', 'Analytical no.: ' . $event['analytical_number']);
 
     $this->setEventDateToShow($event);
-    if ($this->number_of_selected_days == 1) {
+    if ($this->number_of_selected_days == 1 && $this->is_multi_day_event) {
       $this->assign('eventDate', $this->event_date->format('l, j F Y'));
     }
 
@@ -358,6 +359,10 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
     }
     else {
       $this->event_date = $date->add(new DateInterval('P' . $dayOffset . 'D'));;
+    }
+
+    if (substr($event['start_date'], 0, 10) != substr($event['end_date'], 0, 10)) {
+      $this->is_multi_day_event = TRUE;
     }
   }
 
