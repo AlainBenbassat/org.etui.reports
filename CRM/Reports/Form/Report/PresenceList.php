@@ -213,7 +213,9 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
     $this->assign('eventanalyticalNumber', 'Analytical no.: ' . $event['analytical_number']);
 
     $this->setEventDateToShow($event);
-    $this->assign('eventDate', $this->event_date->format('l, j F Y'));
+    if ($this->number_of_selected_days == 1) {
+      $this->assign('eventDate', $this->event_date->format('l, j F Y'));
+    }
 
     $eventLocation = $this->getEventLocation($event);
     $this->assign('eventLocation', $eventLocation);
@@ -243,34 +245,42 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
   }
 
   function getEventLocation($event) {
-    $eventLocation = '';
+    $eventLocationElements = [];
+
     if ($event['loc_block_id']) {
       $eventLocBlock = civicrm_api3('LocBlock', 'getsingle', ['id' => $event['loc_block_id']]);
       if ($eventLocBlock['address_id']) {
         $eventAddress = civicrm_api3('Address', 'getsingle', ['id' => $eventLocBlock['address_id']]);
         if ($eventAddress['street_address']) {
-          $eventLocation .= $eventAddress['street_address'];
+          $eventLocationElements[] = $eventAddress['street_address'];
         }
         if ($eventAddress['supplemental_address_1']) {
-          $eventLocation .= ', ' . $eventAddress['supplemental_address_1'];
+          $eventLocationElements[] = $eventAddress['supplemental_address_1'];
         }
         if ($eventAddress['supplemental_address_2']) {
-          $eventLocation .= ', ' . $eventAddress['supplemental_address_2'];
+          $eventLocationElements[] = $eventAddress['supplemental_address_2'];
         }
         if ($eventAddress['postal_code'] || $eventAddress['city']) {
-          $eventLocation .= ', ' . $eventAddress['postal_code'] . ' ' . $eventAddress['city'];
+          $eventLocationElements[] = trim($eventAddress['postal_code'] . ' ' . $eventAddress['city']);
         }
-        if ($eventAddress['country_id'] && $eventAddress['street_address'] != 'Online') {
-          $country = civicrm_api3('Country', 'getsingle', [
-            'id' => $eventAddress['country_id'],
-            'return' => ['name'],
-          ]);
-          $eventLocation .= ', ' . $country['name'];
+        if ($eventAddress['country_id']) {
+          if (count($eventLocationElements) > 0 && $eventAddress['street_address'] != 'Online') {
+            $country = civicrm_api3('Country', 'getsingle', [
+              'id' => $eventAddress['country_id'],
+              'return' => ['name'],
+            ]);
+            $eventLocationElements[] = $country['name'];
+          }
         }
       }
     }
 
-    return $eventLocation;
+    if (count($eventLocationElements) == 0) {
+      return '';
+    }
+    else {
+      return implode(', ', $eventLocationElements);
+    }
   }
 
   function getEventDetails() {
@@ -355,23 +365,23 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
     else {
       // change the column titles with date
       if (array_key_exists('civicrm_contact_day1', $this->_columnHeaders)) {
-        $this->_columnHeaders['civicrm_contact_day1']['title'] = $this->event_date->format('j F');
+        $this->_columnHeaders['civicrm_contact_day1']['title'] = $this->event_date->format('j F Y');
       }
       if (array_key_exists('civicrm_contact_day2', $this->_columnHeaders)) {
         $d = clone $this->event_date;
-        $this->_columnHeaders['civicrm_contact_day2']['title'] = $d->add(new DateInterval('P1D'))->format('j F');
+        $this->_columnHeaders['civicrm_contact_day2']['title'] = $d->add(new DateInterval('P1D'))->format('j F Y');
       }
       if (array_key_exists('civicrm_contact_day3', $this->_columnHeaders)) {
         $d = clone $this->event_date;
-        $this->_columnHeaders['civicrm_contact_day3']['title'] = $d->add(new DateInterval('P2D'))->format('j F');
+        $this->_columnHeaders['civicrm_contact_day3']['title'] = $d->add(new DateInterval('P2D'))->format('j F Y');
       }
       if (array_key_exists('civicrm_contact_day4', $this->_columnHeaders)) {
         $d = clone $this->event_date;
-        $this->_columnHeaders['civicrm_contact_day4']['title'] = $d->add(new DateInterval('P3D'))->format('j F');
+        $this->_columnHeaders['civicrm_contact_day4']['title'] = $d->add(new DateInterval('P3D'))->format('j F Y');
       }
       if (array_key_exists('civicrm_contact_day5', $this->_columnHeaders)) {
         $d = clone $this->event_date;
-        $this->_columnHeaders['civicrm_contact_day5']['title'] = $d->add(new DateInterval('P4D'))->format('j F');
+        $this->_columnHeaders['civicrm_contact_day5']['title'] = $d->add(new DateInterval('P4D'))->format('j F Y');
       }
     }
   }
