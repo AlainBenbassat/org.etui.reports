@@ -160,23 +160,56 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
       and
         event_id = " . $this->getSelectedParam('event_value');
 
-    // check if we have to filter on role id as well
+    $this->_where .= $this->getWhereRoleFilter();
+    $this->_where .= $this->getWherePresenceFilter();
+
+    if ($this->_aclWhere) {
+      $this->_where .= " AND {$this->_aclWhere} ";
+    }
+  }
+
+  function getWhereRoleFilter() {
+    $filter = '';
+
     if (array_key_exists('rid_value', $this->_submitValues) && count($this->_submitValues['rid_value']) > 0) {
       $operator = $this->_submitValues['rid_op'];
       if ($operator == 'notin') {
         $operator = 'not in';
       }
-      $this->_where .= " and role_id $operator (" . implode(',', $this->_submitValues['rid_value']) . ')';
+      $filter = " and role_id $operator (" . implode(',', $this->_submitValues['rid_value']) . ')';
     }
 
-    // check if we have to filter on presence
+    return $filter;
+  }
+
+  function getWherePresenceFilter() {
+    $filter = '';
+    $selectedDays = [];
+
     if (array_key_exists('presence_value', $this->_submitValues)) {
-      $this->_where .= " and ifnull(pp.presence_575, 1) = " . $this->_submitValues['presence_value'];
+      if (array_key_exists('civicrm_contact_day1', $this->_columnHeaders)) {
+        $selectedDays[] = "ifnull(pp.presence_575, 1) = " . $this->_submitValues['presence_value'];
+      }
+      if (array_key_exists('civicrm_contact_day2', $this->_columnHeaders)) {
+        $selectedDays[] = "ifnull(pp.presence_day2_590, 1) = " . $this->_submitValues['presence_value'];
+      }
+      if (array_key_exists('civicrm_contact_day3', $this->_columnHeaders)) {
+        $selectedDays[] = "ifnull(pp.presence_day_3_591, 1) = " . $this->_submitValues['presence_value'];
+      }
+
+      $n = count($selectedDays);
+      if ($n == 0) {
+        $filter = " and ifnull(pp.presence_575, 1) = " . $this->_submitValues['presence_value'];
+      }
+      elseif ($n == 1) {
+        $filter = ' and ' . $selectedDays[0];
+      }
+      else {
+        $filter = ' and (' . implode(' or ', $selectedDays) . ')';
+      }
     }
 
-    if ($this->_aclWhere) {
-      $this->_where .= " AND {$this->_aclWhere} ";
-    }
+    return $filter;
   }
 
   function groupBy() {
