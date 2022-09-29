@@ -285,14 +285,25 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
   }
 
   function getEventDuration($event) {
-    $eventDuration = 'From ';
+    $eventDuration = '';
 
     $startDate = new DateTime($event['start_date']);
-    $eventDuration .= $startDate->format('d-m-Y H:i');
+    $startDateDDMMYYYY = $startDate->format('d-m-Y');
 
+    $endDateDDMMYYYY = '';
     if (!empty($event['end_date'])) {
       $endDate = new DateTime($event['end_date']);
-      $eventDuration .= ' Until ' . $endDate->format('d-m-Y H:i');
+      $endDateDDMMYYYY = $endDate->format('d-m-Y');
+    }
+
+    if ($endDateDDMMYYYY == '') {
+      $eventDuration = $startDateDDMMYYYY;
+    }
+    elseif ($startDateDDMMYYYY == $endDateDDMMYYYY) {
+      $eventDuration = $startDateDDMMYYYY;
+    }
+    else {
+      $eventDuration = 'From ' . $startDateDDMMYYYY . ' Until ' . $endDateDDMMYYYY;
     }
 
     return $eventDuration;
