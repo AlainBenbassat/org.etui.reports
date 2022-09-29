@@ -188,18 +188,18 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
 
     if (array_key_exists('presence_value', $this->_submitValues)) {
       if (array_key_exists('civicrm_contact_day1', $this->_columnHeaders)) {
-        $selectedDays[] = "ifnull(pp.presence_575, 1) = " . $this->_submitValues['presence_value'];
+        $selectedDays[] = "pp.presence_575 = " . $this->_submitValues['presence_value'];
       }
       if (array_key_exists('civicrm_contact_day2', $this->_columnHeaders)) {
-        $selectedDays[] = "ifnull(pp.presence_day2_590, 1) = " . $this->_submitValues['presence_value'];
+        $selectedDays[] = "pp.presence_day2_590 = " . $this->_submitValues['presence_value'];
       }
       if (array_key_exists('civicrm_contact_day3', $this->_columnHeaders)) {
-        $selectedDays[] = "ifnull(pp.presence_day_3_591, 1) = " . $this->_submitValues['presence_value'];
+        $selectedDays[] = "pp.presence_day_3_591 = " . $this->_submitValues['presence_value'];
       }
 
       $n = count($selectedDays);
       if ($n == 0) {
-        $filter = " and ifnull(pp.presence_575, 1) = " . $this->_submitValues['presence_value'];
+        $filter = " and pp.presence_575 = " . $this->_submitValues['presence_value'];
       }
       elseif ($n == 1) {
         $filter = ' and ' . $selectedDays[0];
