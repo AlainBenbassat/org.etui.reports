@@ -511,10 +511,10 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
   }
 
   function getSelectedParam($name) {
-    if (array_key_exists($name, $this->_params) && $this->_params[$name]) {
+    if (!empty($this->_params[$name])) {
       return $this->_params[$name];
     }
-    elseif (array_key_exists($name, $this->_submitValues) && $this->_submitValues[$name]) {
+    elseif (!empty($this->_submitValues[$name])) {
       return $this->_submitValues[$name];
     }
     elseif ($_SESSION['event_value']) {
