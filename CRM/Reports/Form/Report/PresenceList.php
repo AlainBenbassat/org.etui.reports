@@ -156,7 +156,7 @@ class CRM_Reports_Form_Report_PresenceList extends CRM_Report_Form {
       and
         {$this->_aliases['civicrm_contact']}.is_deceased = 0
       and
-        p.status_id in (select st.id from civicrm_participant_status_type st where st.class = 'Positive')
+        p.status_id in (select st.id from civicrm_participant_status_type st where st.is_counted = 1)
       and
         event_id = " . $this->getSelectedParam('event_value');
 
