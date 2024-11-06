@@ -3,6 +3,7 @@
 class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_Custom_Base implements CRM_Contact_Form_Search_Interface {
   private $MEMBERSHIP_STATUS_CURRENT = 2;
   private $MEMBERSHIP_STATUS_NEW = 1;
+  private $MEMBERSHIP_STATUS_GRACE = 3;
   private $HESA_EN = 1;
   private $HESA_FR = 2;
   private $MAGAZINE_ADDRESS_TYPE_ID = 8;
@@ -192,7 +193,7 @@ class CRM_Reports_Form_Search_HesamagAddresses extends CRM_Contact_Form_Search_C
       and
         hesa_$lang.membership_type_id = $typeID
       and
-        hesa_$lang.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT})
+        hesa_$lang.status_id in ({$this->MEMBERSHIP_STATUS_NEW}, {$this->MEMBERSHIP_STATUS_CURRENT}, {$this->MEMBERSHIP_STATUS_GRACE})
       and
         hesa_$lang.start_date >= $startDateFilter
       and
