@@ -25,9 +25,9 @@
 
         {*include the table layout*}
         {*include file="CRM/Report/Form/Layout/Table.tpl"*}
-        {assign var="etuiTableStyle" value="font-family: Georgia; border-collapse: collapse; border: none"}
-        {assign var="etuiColHeaderStyle" value="font-family: Georgia; font-size: 14px; text-align: left; border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px dotted #000000; border-right: 1px dotted #000000; padding-left: 10px; padding-right: 10px; background-color: #b09ab6; color: #FFFFFF"}
-        {assign var="etuiCellStyle" value="font-family: Georgia; font-size: 14px; border-bottom: 1px solid #000000; padding-left: 10px; border-left: 1px dotted #000000; border-right: 1px dotted #000000; padding-right: 10px;"}
+        {assign var="etuiTableStyle" value="font-family: DejaVu Sans; border-collapse: collapse; border: none"}
+        {assign var="etuiColHeaderStyle" value="font-family: DejaVu Sans; font-size: 14px; text-align: left; border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px dotted #000000; border-right: 1px dotted #000000; padding-left: 10px; padding-right: 10px; background-color: #b09ab6; color: #FFFFFF"}
+        {assign var="etuiCellStyle" value="font-family: DejaVu Sans; font-size: 14px; border-bottom: 1px solid #000000; padding-left: 10px; border-left: 1px dotted #000000; border-right: 1px dotted #000000; padding-right: 10px;"}
 
         {include file="CRM/Reports/Form/Report/PresenceListRows.tpl"}
 

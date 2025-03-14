@@ -4,7 +4,7 @@
             {include file="CRM/common/pager.tpl" location="top"}
         </div>
     {/if}
-    <table style="font-family: Arial Narrow; color: #FFFFFF; background-color: #b09ab6;width:100%">
+    <table style="font-family: DejaVu Sans; color: #FFFFFF; background-color: #b09ab6;width:100%">
         <tr>
             <td style="font-size: 2em">{$eventTitle}</td>
         </tr>
@@ -19,7 +19,7 @@
         </tr>
     </table>
 
-    <p style="font-size: 1.3em; font-family: Arial Narrow">{$eventDate}</p>
+    <p style="font-size: 1.3em; font-family: DejaVu Sans">{$eventDate}</p>
 
     <table class="report-layout display" style="{$etuiTableStyle}">
     {capture assign="tableHeader"}
